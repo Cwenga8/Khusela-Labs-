@@ -7,8 +7,8 @@
     Title="HerMentor">
 
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Title="Welcome"
+        ContentTemplate="{DataTemplate local:WelcomePage}"
+        Route="welcome" />
 
 </Shell>
