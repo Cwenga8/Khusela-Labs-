@@ -16,8 +16,35 @@ if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32
 	throw new InvalidOperationException(
 		"Jwt:Key is missing or shorter than 32 bytes. Set it with: dotnet user-secrets set \"Jwt:Key\" \"<long random string>\"");
 
-builder.Services.AddDbContext<AppDb>(o =>
-	o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=hermentor.db"));
+var connectionString = builder.Configuration.GetConnectionString("Default");
+if (string.IsNullOrWhiteSpace(connectionString))
+	throw new InvalidOperationException(
+		"ConnectionStrings:Default is missing. Set it with: dotnet user-secrets set \"ConnectionStrings:Default\" \"Host=...;Port=5432;Database=postgres;Username=postgres;Password=...;SSL Mode=Require;Trust Server Certificate=true\"");
+
+// Accept Supabase's postgresql://user:pass@host:port/db form as well as Npgsql's key=value form.
+if (connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
+	|| connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+{
+	// Split by hand so passwords with raw special characters still work.
+	var rest = connectionString[(connectionString.IndexOf("://", StringComparison.Ordinal) + 3)..];
+	var at = rest.LastIndexOf('@');
+	var userInfo = rest[..at].Split(':', 2);
+	var hostPart = rest[(at + 1)..].Split('?', 2)[0];
+	var slash = hostPart.IndexOf('/');
+	var hostPort = (slash >= 0 ? hostPart[..slash] : hostPart).Split(':', 2);
+	connectionString = new Npgsql.NpgsqlConnectionStringBuilder
+	{
+		Host = hostPort[0],
+		Port = hostPort.Length > 1 ? int.Parse(hostPort[1]) : 5432,
+		Database = slash >= 0 && slash < hostPart.Length - 1 ? hostPart[(slash + 1)..] : "postgres",
+		Username = Uri.UnescapeDataString(userInfo[0]),
+		Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : null,
+		SslMode = Npgsql.SslMode.Require,
+		TrustServerCertificate = true
+	}.ConnectionString;
+}
+
+builder.Services.AddDbContext<AppDb>(o => o.UseNpgsql(connectionString));
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSignalR();
 

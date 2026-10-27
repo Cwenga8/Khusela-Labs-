@@ -10,8 +10,13 @@ public class AppDb(DbContextOptions<AppDb> options) : DbContext(options)
 	public DbSet<Session> Sessions => Set<Session>();
 	public DbSet<SessionAction> SessionActions => Set<SessionAction>();
 
+	public const string Schema = "hermentor";
+
 	protected override void OnModelCreating(ModelBuilder b)
 	{
+		// Own schema: Supabase's public data API only exposes "public".
+		b.HasDefaultSchema(Schema);
+
 		b.Entity<User>().HasIndex(u => u.Email).IsUnique();
 
 		b.Entity<MenteeProfile>().HasKey(p => p.UserId);
