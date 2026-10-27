@@ -2,6 +2,11 @@
 bin/
 obj/
 
+# Local API database
+*.db
+*.db-shm
+*.db-wal
+
 # User-specific files
 .vs/
 *.user
