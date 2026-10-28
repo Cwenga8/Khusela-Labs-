@@ -47,7 +47,7 @@ public class Session
 	public string Format { get; set; } = "Video";
 	public string Topic { get; set; } = "";
 	public string Goal { get; set; } = "";
-	public string Status { get; set; } = SessionStatus.Booked;
+	public string Status { get; set; } = SessionStatus.Pending;
 	public string? PrepJson { get; set; }
 	public string Summary { get; set; } = "";
 	public string MentorFeedback { get; set; } = "";
@@ -65,6 +65,7 @@ public class SessionAction
 
 public static class SessionStatus
 {
+	public const string Pending = "Pending";
 	public const string Booked = "Booked";
 	public const string Completed = "Completed";
 	public const string Cancelled = "Cancelled";

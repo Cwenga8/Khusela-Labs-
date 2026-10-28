@@ -14,6 +14,7 @@ public static class MentorEndpoints
 		var group = app.MapGroup("/api/mentors").RequireAuthorization();
 
 		group.MapGet("/", List);
+		group.MapGet("/me", GetMe);
 		group.MapGet("/{id:int}", Get);
 		group.MapPut("/me", UpdateMe);
 	}
@@ -42,6 +43,15 @@ public static class MentorEndpoints
 			.ToList();
 
 		return Results.Ok(result);
+	}
+
+	private static async Task<IResult> GetMe(ClaimsPrincipal principal, AppDb db)
+	{
+		var userId = principal.UserId();
+		var mentor = await db.Mentors.AsNoTracking().FirstOrDefaultAsync(m => m.UserId == userId);
+		return mentor is null
+			? Results.NotFound(new ApiError("You don't have a mentor profile."))
+			: Results.Ok(Matching.ToDto(mentor, null));
 	}
 
 	private static async Task<IResult> Get(int id, ClaimsPrincipal principal, AppDb db)

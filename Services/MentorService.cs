@@ -5,6 +5,12 @@ public sealed class MentorService(ApiClient api)
 	public Task<List<MentorDto>> SearchAsync(string? query, string? category, CancellationToken ct = default) =>
 		api.GetAsync<List<MentorDto>>(
 			$"api/mentors?query={Uri.EscapeDataString(query ?? "")}&category={Uri.EscapeDataString(category ?? "")}", ct);
+
+	public Task<MentorDto> GetMineAsync(CancellationToken ct = default) =>
+		api.GetAsync<MentorDto>("api/mentors/me", ct);
+
+	public Task<MentorDto> SaveMineAsync(string title, string category, string bio, List<string> tags, int years, bool isAvailable, string availability, CancellationToken ct = default) =>
+		api.PutAsync<MentorDto>("api/mentors/me", new { title, category, bio, tags, years, isAvailable, availability }, ct);
 }
 
 public sealed class ProfileService(ApiClient api)
@@ -38,6 +44,9 @@ public sealed class SessionService(ApiClient api)
 
 	public Task<SessionDto> CancelAsync(int id, CancellationToken ct = default) =>
 		api.PostAsync<SessionDto>($"api/sessions/{id}/cancel", new { }, ct);
+
+	public Task<SessionDto> RespondAsync(int id, bool accept, CancellationToken ct = default) =>
+		api.PostAsync<SessionDto>($"api/sessions/{id}/respond", new { accept }, ct);
 
 	public Task<SessionDto> SavePrepAsync(int id, PrepResponse prep, CancellationToken ct = default) =>
 		api.PutAsync<SessionDto>($"api/sessions/{id}/prep", new { prep }, ct);

@@ -41,7 +41,7 @@ public sealed class SignUpPage : AppPage
 			try
 			{
 				await Backend.Auth.RegisterAsync(fullName, mail, pass, _role);
-				GoRoot(_role == "mentor" ? AppScreen.Home : AppScreen.ProfileSetup);
+				GoRoot(_role == "mentor" ? AppScreen.MentorDashboard : AppScreen.ProfileSetup);
 			}
 			catch (Exception ex)
 			{

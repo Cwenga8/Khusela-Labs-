@@ -144,7 +144,7 @@ public sealed class SessionPrepPage : AppPage
 		if (!prep.AiGenerated)
 			body.Add(T("The AI is unavailable right now, so these are general suggestions.", 10, Muted));
 
-		if (_session is { } session && !session.IsBooked)
+		if (_session is { } session && !session.IsUpcoming)
 			body.Add(GradButton("Done", () => GoRoot(AppScreen.SessionOutcomes)));
 		else if (_session is not null)
 			body.Add(GradButton(_saving ? "Saving..." : "Save to session", () => _ = SaveAsync(prep)));

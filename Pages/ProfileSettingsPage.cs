@@ -25,11 +25,14 @@ public sealed class ProfileSettingsPage : AppPage
 			row.Add(Icon(IconChevronRight, 14, Muted, 2), 1, 0);
 			list.Add(action == null ? row : Tap(row, action));
 		}
-		Row("Edit profile", () => Go(AppScreen.ProfileSetup));
-		Row("Career goals", () => Go(AppScreen.Progress));
+		if (!IsMentorUser)
+			Row("Edit profile", () => Go(AppScreen.ProfileSetup));
+		if (!IsMentorUser)
+			Row("Career goals", () => Go(AppScreen.Progress));
 		Row("Notifications");
 		Row("Privacy and safety");
-		Row("Switch to mentor mode", () => Go(AppScreen.MentorDashboard));
+		if (IsMentorUser)
+			Row("Mentor dashboard", () => GoRoot(AppScreen.MentorDashboard));
 		Row("Log out", () =>
 		{
 			Backend.Auth.Logout();
