@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace HerMentor.Api.Endpoints;
 
 public record BookRequest(int MentorId, DateTime StartsAt, string? Format, string? Topic, string? Goal);
+public record RespondRequest(bool Accept);
 public record SavePrepRequest(PrepResponse Prep);
 public record OutcomeRequest(string? Summary, List<string>? Actions, string? Feedback);
 public record SessionActionDto(int Id, string Text, bool Done);
@@ -40,6 +41,7 @@ public static class SessionEndpoints
 		group.MapGet("/busy", Busy);
 		group.MapPost("/", Book);
 		group.MapPost("/{id:int}/cancel", Cancel);
+		group.MapPost("/{id:int}/respond", Respond);
 		group.MapPut("/{id:int}/prep", SavePrep);
 		group.MapPost("/{id:int}/outcome", LogOutcome);
 		group.MapPost("/{id:int}/actions/{actionId:int}/toggle", ToggleAction);
@@ -131,12 +133,31 @@ public static class SessionEndpoints
 		var (session, error) = await Load(id, principal, db);
 		if (session is null)
 			return error!;
-		if (session.Status != SessionStatus.Booked)
+		if (session.Status is not (SessionStatus.Booked or SessionStatus.Pending))
 			return Results.Json(new ApiError("Only upcoming sessions can be cancelled."), statusCode: StatusCodes.Status409Conflict);
 
 		session.Status = SessionStatus.Cancelled;
 		await db.SaveChangesAsync();
 		return Results.Ok(await Single(session, principal.UserId(), db));
+	}
+
+	/// <summary>The mentor accepts or declines a request. Declining frees the slot.</summary>
+	private static async Task<IResult> Respond(int id, RespondRequest req, ClaimsPrincipal principal, AppDb db)
+	{
+		var userId = principal.UserId();
+		var (session, error) = await Load(id, principal, db);
+		if (session is null)
+			return error!;
+
+		var mentorUserId = await db.Mentors.AsNoTracking().Where(m => m.Id == session.MentorId).Select(m => m.UserId).FirstOrDefaultAsync();
+		if (mentorUserId != userId)
+			return Results.Json(new ApiError("Only the mentor can respond to a request."), statusCode: StatusCodes.Status403Forbidden);
+		if (session.Status != SessionStatus.Pending)
+			return Results.Json(new ApiError("This request has already been answered."), statusCode: StatusCodes.Status409Conflict);
+
+		session.Status = req.Accept ? SessionStatus.Booked : SessionStatus.Cancelled;
+		await db.SaveChangesAsync();
+		return Results.Ok(await Single(session, userId, db));
 	}
 
 	private static async Task<IResult> SavePrep(int id, SavePrepRequest req, ClaimsPrincipal principal, AppDb db)
@@ -173,6 +194,8 @@ public static class SessionEndpoints
 			return error!;
 		if (session.Status == SessionStatus.Cancelled)
 			return Results.Json(new ApiError("This session was cancelled."), statusCode: StatusCodes.Status409Conflict);
+		if (session.Status == SessionStatus.Pending)
+			return Results.Json(new ApiError("The mentor hasn't confirmed this session yet."), statusCode: StatusCodes.Status409Conflict);
 
 		var isMentee = session.MenteeId == userId;
 

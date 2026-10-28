@@ -22,6 +22,11 @@ public abstract partial class AppPage
 		_ => "welcome"
 	};
 
+	protected static bool IsMentorUser => Backend.Auth.CurrentUser?.Role == "mentor";
+
+	/// <summary>Where "home" is for the signed-in user: mentors land on their dashboard.</summary>
+	protected static AppScreen HomeScreen => IsMentorUser ? AppScreen.MentorDashboard : AppScreen.Home;
+
 	protected static void Go(AppScreen s) => _ = Shell.Current.GoToAsync(Route(s));
 
 	protected static void GoBack() => _ = Shell.Current.GoToAsync("..");

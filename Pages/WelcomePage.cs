@@ -20,7 +20,7 @@ public sealed class WelcomePage : AppPage
 	{
 		await Backend.Auth.EnsureLoadedAsync();
 		if (Backend.Auth.IsSignedIn)
-			MainThread.BeginInvokeOnMainThread(() => GoRoot(AppScreen.Home));
+			MainThread.BeginInvokeOnMainThread(() => GoRoot(HomeScreen));
 	}
 
 	protected override View BuildContent()

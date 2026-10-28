@@ -250,14 +250,21 @@ public abstract partial class AppPage
 
 	protected static View TabBar(AppScreen active)
 	{
-		var tabs = new (string Name, string Icon, AppScreen Target)[]
-		{
-			("Home", IconHome, AppScreen.Home),
-			("Career", IconBriefcase, AppScreen.CareerGuidance),
-			("Mentors", IconUsers, AppScreen.FindMentors),
-			("Sessions", IconCalendar, AppScreen.SessionOutcomes),
-			("Profile", IconUser, AppScreen.ProfileSettings)
-		};
+		var tabs = IsMentorUser
+			? new (string Name, string Icon, AppScreen Target)[]
+			{
+				("Dashboard", IconHome, AppScreen.MentorDashboard),
+				("Sessions", IconCalendar, AppScreen.SessionOutcomes),
+				("Profile", IconUser, AppScreen.ProfileSettings)
+			}
+			: new (string Name, string Icon, AppScreen Target)[]
+			{
+				("Home", IconHome, AppScreen.Home),
+				("Career", IconBriefcase, AppScreen.CareerGuidance),
+				("Mentors", IconUsers, AppScreen.FindMentors),
+				("Sessions", IconCalendar, AppScreen.SessionOutcomes),
+				("Profile", IconUser, AppScreen.ProfileSettings)
+			};
 		var grid = new Grid { Padding = new Thickness(4, 8, 4, 10), BackgroundColor = Bg };
 		for (var i = 0; i < tabs.Length; i++)
 		{

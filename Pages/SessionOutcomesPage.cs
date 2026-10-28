@@ -90,8 +90,8 @@ public sealed class SessionOutcomesPage : AppPage
 			return;
 		}
 
-		var upcoming = _sessions.Where(x => x.IsBooked).OrderBy(x => x.StartsAt).ToList();
-		var past = _sessions.Where(x => !x.IsBooked).OrderByDescending(x => x.StartsAt).ToList();
+		var upcoming = _sessions.Where(x => x.IsUpcoming).OrderBy(x => x.StartsAt).ToList();
+		var past = _sessions.Where(x => !x.IsUpcoming).OrderByDescending(x => x.StartsAt).ToList();
 
 		if (upcoming.Count > 0)
 		{
@@ -115,6 +115,28 @@ public sealed class SessionOutcomesPage : AppPage
 		stack.Add(T($"{session.Topic} with {session.OtherName} · {session.Format}", 11, Muted));
 		if (session.Goal.Length > 0)
 			stack.Add(T($"Goal: {session.Goal}", 11, Muted));
+
+		if (session.IsPending)
+		{
+			stack.Add(T(session.IsMentorView ? "Waiting for your answer" : "Awaiting mentor confirmation", 11, Pink, true));
+			var pending = new Grid
+			{
+				ColumnSpacing = 8,
+				ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Star) }
+			};
+			if (session.IsMentorView)
+			{
+				pending.Add(GradButton("Accept", () => _ = RespondAsync(session, true), 36), 0, 0);
+				pending.Add(OutlineButton("Decline", () => _ = RespondAsync(session, false), Pink, 36), 1, 0);
+			}
+			else
+			{
+				pending.Add(OutlineButton(session.Prep is null ? "Prepare" : "Prep", () => SessionPrepPage.Open(session), Line, 36), 0, 0);
+				pending.Add(OutlineButton("Cancel request", () => _ = CancelAsync(session), Line, 36), 1, 0);
+			}
+			stack.Add(pending);
+			return Card(stack, 14);
+		}
 
 		if (_logging == session.Id)
 		{
@@ -236,6 +258,9 @@ public sealed class SessionOutcomesPage : AppPage
 
 	private Task CancelAsync(SessionDto session) =>
 		Run(async () => Replace(await Backend.Sessions.CancelAsync(session.Id)));
+
+	private Task RespondAsync(SessionDto session, bool accept) =>
+		Run(async () => Replace(await Backend.Sessions.RespondAsync(session.Id, accept)));
 
 	private Task ToggleAsync(SessionDto session, SessionActionDto action) =>
 		Run(async () => Replace(await Backend.Sessions.ToggleActionAsync(session.Id, action.Id)));

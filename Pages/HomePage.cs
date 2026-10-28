@@ -71,7 +71,7 @@ public sealed class HomePage : AppPage
 		List<MentorDto> mentors)
 	{
 		var cutoff = DateTime.UtcNow.AddHours(-1);
-		var next = sessions.Where(x => x.IsBooked && x.StartsAt >= cutoff).OrderBy(x => x.StartsAt).FirstOrDefault();
+		var next = sessions.Where(x => x.IsUpcoming && x.StartsAt >= cutoff).OrderBy(x => x.StartsAt).FirstOrDefault();
 
 		var nextCard = new VerticalStackLayout { Spacing = 6 };
 		if (next is null)
@@ -83,7 +83,7 @@ public sealed class HomePage : AppPage
 		}
 		else
 		{
-			nextCard.Add(T("NEXT SESSION", 9, Pink, true));
+			nextCard.Add(T(next.IsPending ? "NEXT SESSION · AWAITING MENTOR" : "NEXT SESSION", 9, Pink, true));
 			nextCard.Add(T(FormatWhen(next.StartsAt), 16, Ink, true));
 			nextCard.Add(T($"{next.Topic} with {next.OtherName}", 11, Muted));
 			nextCard.Add(GradButton(next.Prep is null ? "Prepare with AI" : "View my prep", () => SessionPrepPage.Open(next), 40));
