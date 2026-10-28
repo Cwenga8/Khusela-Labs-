@@ -6,7 +6,7 @@ public static class ApiConfig
 {
 	// 10.0.2.2 is the host machine as seen from the Android emulator.
 	public static string BaseUrl =>
-		Preferences.Get("api_url", DeviceInfo.Platform == DevicePlatform.Android ? "http://10.0.2.2:5080" : "http://localhost:5080");
+		Preferences.Get("api_url", "https://hermentor-enf4h8hzguhgaeeh.southafricanorth-01.azurewebsites.net");
 
 	public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 }

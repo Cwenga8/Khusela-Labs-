@@ -20,7 +20,7 @@
 		<Nullable>enable</Nullable>
 
 		<!-- The backend lives in its own project; keep its files out of the app build. -->
-		<DefaultItemExcludes>$(DefaultItemExcludes);HerMentor.Api\**</DefaultItemExcludes>
+		<DefaultItemExcludes>$(DefaultItemExcludes);HerMentor.Api\**;**\._*</DefaultItemExcludes>
 
 		<!-- Enable XAML source generation for faster build times and improved performance.
 		     This generates C# code from XAML at compile time instead of runtime inflation.
@@ -73,5 +73,15 @@
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 	</ItemGroup>
+
+	<Target Name="RemoveAppleDoubleJavaSources" BeforeTargets="_CompileJava" Condition="'$(TargetFramework)' == 'net10.0-android'">
+		<ItemGroup>
+			<_AppleDoubleJavaSources Include="@(_JavaStubFiles)" Condition="$([System.String]::Copy('%(_JavaStubFiles.Identity)').Contains('._'))" />
+			<_AppleDoubleJavaSources Include="@(_JavaSource)" Condition="$([System.String]::Copy('%(_JavaSource.Identity)').Contains('._'))" />
+			<_JavaStubFiles Remove="@(_AppleDoubleJavaSources)" />
+			<_JavaSource Remove="@(_AppleDoubleJavaSources)" />
+		</ItemGroup>
+		<Delete Files="@(_AppleDoubleJavaSources)" />
+	</Target>
 
 </Project>
