@@ -32,7 +32,7 @@ public sealed class LoginPage : AppPage
 			try
 			{
 				await Backend.Auth.LoginAsync(mail, password.Text);
-				GoRoot(AppScreen.Home);
+				GoRoot(HomeScreen);
 			}
 			catch (Exception ex)
 			{

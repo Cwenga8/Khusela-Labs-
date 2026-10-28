@@ -57,6 +57,8 @@ public record SessionDto(
 {
 	public string OtherName => IsMentorView ? MenteeName : MentorName;
 	public bool IsBooked => Status == "Booked";
+	public bool IsPending => Status == "Pending";
+	public bool IsUpcoming => IsBooked || IsPending;
 	public bool IsCompleted => Status == "Completed";
 	public bool IsCancelled => Status == "Cancelled";
 }

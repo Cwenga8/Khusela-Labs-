@@ -78,7 +78,7 @@ public sealed class BookSessionPage : AppPage
 
 		_status = T("", 11, Pink);
 		s.Add(_status);
-		s.Add(GradButton("Confirm booking", () => _ = BookAsync(mentor)));
+		s.Add(GradButton("Request session", () => _ = BookAsync(mentor)));
 
 		if (!_busyLoaded)
 			_ = LoadBusyAsync(mentor.Id);
