@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace HerMentor.Api.Data;
 
@@ -6,37 +8,21 @@ public static class Seed
 {
 	public static async Task RunAsync(AppDb db)
 	{
-		await db.Database.EnsureCreatedAsync();
+		await db.Database.ExecuteSqlRawAsync($"CREATE SCHEMA IF NOT EXISTS {AppDb.Schema}");
 
-		// EnsureCreated skips existing databases, so add the session tables to older ones without wiping them.
-		await db.Database.ExecuteSqlRawAsync("""
-			CREATE TABLE IF NOT EXISTS "Sessions" (
-				"Id" INTEGER NOT NULL CONSTRAINT "PK_Sessions" PRIMARY KEY AUTOINCREMENT,
-				"MenteeId" INTEGER NOT NULL,
-				"MentorId" INTEGER NOT NULL,
-				"StartsAt" TEXT NOT NULL,
-				"Format" TEXT NOT NULL,
-				"Topic" TEXT NOT NULL,
-				"Goal" TEXT NOT NULL,
-				"Status" TEXT NOT NULL,
-				"PrepJson" TEXT NULL,
-				"Summary" TEXT NOT NULL,
-				"MentorFeedback" TEXT NOT NULL,
-				"CreatedAt" TEXT NOT NULL
-			);
-			""");
-		await db.Database.ExecuteSqlRawAsync("""
-			CREATE TABLE IF NOT EXISTS "SessionActions" (
-				"Id" INTEGER NOT NULL CONSTRAINT "PK_SessionActions" PRIMARY KEY AUTOINCREMENT,
-				"SessionId" INTEGER NOT NULL,
-				"Text" TEXT NOT NULL,
-				"Done" INTEGER NOT NULL,
-				CONSTRAINT "FK_SessionActions_Sessions_SessionId" FOREIGN KEY ("SessionId") REFERENCES "Sessions" ("Id") ON DELETE CASCADE
-			);
-			""");
-		await db.Database.ExecuteSqlRawAsync("""CREATE INDEX IF NOT EXISTS "IX_Sessions_MenteeId" ON "Sessions" ("MenteeId");""");
-		await db.Database.ExecuteSqlRawAsync("""CREATE UNIQUE INDEX IF NOT EXISTS "IX_Sessions_MentorId_StartsAt" ON "Sessions" ("MentorId", "StartsAt") WHERE "Status" <> 'Cancelled';""");
-		await db.Database.ExecuteSqlRawAsync("""CREATE INDEX IF NOT EXISTS "IX_SessionActions_SessionId" ON "SessionActions" ("SessionId");""");
+		// EnsureCreated would see Supabase's own tables and skip, so create ours when the schema is empty.
+		var exists = await db.Database
+			.SqlQuery<bool>($"SELECT to_regclass('hermentor.\"Users\"') IS NOT NULL AS \"Value\"")
+			.SingleAsync();
+
+		if (!exists)
+		{
+			await db.GetService<IRelationalDatabaseCreator>().CreateTablesAsync();
+		}
+
+		// Supabase exposes tables through an API; with RLS on and no policies, only this server (the owner) can read them.
+		foreach (var table in new[] { "Users", "MenteeProfiles", "Mentors", "Sessions", "SessionActions" })
+			await db.Database.ExecuteSqlRawAsync($"ALTER TABLE {AppDb.Schema}.\"{table}\" ENABLE ROW LEVEL SECURITY");
 
 		if (await db.Mentors.AnyAsync())
 			return;
