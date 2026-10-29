@@ -99,7 +99,7 @@ public abstract partial class AppPage
 	{
 		Spacing = 4,
 		Children = { Icon(IconChevronLeft, 14, Muted, 2), T("Back", 12, Muted) }
-	}, GoBack);
+	}, () => GoBack());
 
 	protected static View CheckRow(string text, bool done, double size = 12)
 	{
