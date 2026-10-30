@@ -21,6 +21,9 @@ public record CareerPathDto(string Id, string Name, int Fit, List<string> Have, 
 public record CareerPathsResponse(bool NeedsProfile, List<CareerPathDto> Paths);
 
 public record ChatTurn(string Role, string Content);
+public record ChatMessageDto(int Id, int SessionId, int SenderId, string SenderName, string Content, DateTime CreatedAt, bool IsMine);
+public record MessageDeletedDto(int Id);
+public record ChatClearedDto(int DeletedCount);
 
 public record GapSkillDto(string Name, bool Have, string Step);
 public record RoleOptionDto(string Id, string Name, int Fit);

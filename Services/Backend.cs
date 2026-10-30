@@ -14,6 +14,7 @@ public static class Backend
 		services.AddSingleton<CareerService>();
 		services.AddSingleton<PrepService>();
 		services.AddSingleton<SessionService>();
+		services.AddSingleton<MessageService>();
 		services.AddSingleton<AssistantService>();
 		services.AddSingleton<RealtimeService>();
 	}
@@ -24,6 +25,7 @@ public static class Backend
 	public static CareerService Career => Get<CareerService>();
 	public static PrepService Prep => Get<PrepService>();
 	public static SessionService Sessions => Get<SessionService>();
+	public static MessageService Messages => Get<MessageService>();
 	public static AssistantService Assistant => Get<AssistantService>();
 	public static RealtimeService Realtime => Get<RealtimeService>();
 

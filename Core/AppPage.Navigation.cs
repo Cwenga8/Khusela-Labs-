@@ -24,7 +24,7 @@ public abstract partial class AppPage
     };
 
     protected static bool IsMentorUser =>
-        Backend.Auth.CurrentUser?.Role == "mentor";
+        string.Equals(Backend.Auth.CurrentUser?.Role, "mentor", StringComparison.OrdinalIgnoreCase);
 
     // Returns the appropriate home screen for the signed-in user.
     // Mentors go to their dashboard; mentees go to Home.

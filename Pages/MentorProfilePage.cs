@@ -29,7 +29,7 @@ public sealed class MentorProfilePage : AppPage
 		avail.Add(T(m.IsAvailable ? (m.Availability.Length > 0 ? m.Availability : "Available") : "Not taking mentees right now", 11, Pink), 1, 0);
 		s.Add(avail);
 		s.Add(GradButton("Request session", () => Go(AppScreen.BookSession)));
-		s.Add(OutlineButton("Send message", () => Go(AppScreen.Messages)));
+		s.Add(OutlineButton("Request a session to message", () => Go(AppScreen.BookSession)));
 		return s;
 	}
 }

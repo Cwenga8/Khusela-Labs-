@@ -49,5 +49,10 @@ URL (for example, `https://api.example.com`).
 
 The mobile-first app implements its screens as separate MAUI pages and uses
 the API for authentication, mentor discovery, profiles, sessions, career
-guidance, and messaging. The main navigation links Home, Explore, Sessions,
-Messages, and Profile.
+guidance, and messaging. Mentees can discover mentors and request sessions;
+mentors use their dashboard to set up a profile, approve or decline requests,
+and view accepted sessions with their mentees. The main navigation adapts to
+the signed-in user's role. Session conversations are stored in SQL Server and
+are accessible only to that session's mentee and mentor. Deleting a message or
+clearing a chat removes it for both participants. The API ensures the
+`Messages` table exists at startup for existing databases.

@@ -1,4 +1,3 @@
 <Solution>
-  <Project Path="HerMentor.Api/HerMentor.Api.csproj" />
   <Project Path="HerMentor.csproj" />
 </Solution>

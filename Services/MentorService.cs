@@ -1,16 +1,70 @@
+using System.Text.Json;
+
 namespace HerMentor;
 
-public sealed class MentorService(ApiClient api)
+public sealed class MentorService(ApiClient api, AuthService auth)
 {
+	private string? CacheKey =>
+		auth.CurrentUser is { Id: > 0 } user ? $"hermentor.mentor-profile.{user.Id}" : null;
+
 	public Task<List<MentorDto>> SearchAsync(string? query, string? category, CancellationToken ct = default) =>
 		api.GetAsync<List<MentorDto>>(
 			$"api/mentors?query={Uri.EscapeDataString(query ?? "")}&category={Uri.EscapeDataString(category ?? "")}", ct);
 
-	public Task<MentorDto> GetMineAsync(CancellationToken ct = default) =>
-		api.GetAsync<MentorDto>("api/mentors/me", ct);
+	public async Task<MentorDto> GetMineAsync(CancellationToken ct = default)
+	{
+		try
+		{
+			var mentor = await api.GetAsync<MentorDto>("api/mentors/me", ct);
+			Cache(mentor);
+			return mentor;
+		}
+		catch (ApiException ex) when (ex.StatusCode == 405)
+		{
+			var cached = GetCachedMine();
+			if (cached is not null)
+				return cached;
 
-	public Task<MentorDto> SaveMineAsync(string title, string category, string bio, List<string> tags, int years, bool isAvailable, string availability, CancellationToken ct = default) =>
-		api.PutAsync<MentorDto>("api/mentors/me", new { title, category, bio, tags, years, isAvailable, availability }, ct);
+			throw;
+		}
+	}
+
+	public async Task<MentorDto> SaveMineAsync(string title, string category, string bio, List<string> tags, int years, bool isAvailable, string availability, CancellationToken ct = default)
+	{
+		var mentor = await api.PutAsync<MentorDto>(
+			"api/mentors/me",
+			new { title, category, bio, tags, years, isAvailable, availability },
+			ct);
+		Cache(mentor);
+		return mentor;
+	}
+
+	public MentorDto? GetCachedMine()
+	{
+		var key = CacheKey;
+		if (key is null)
+			return null;
+
+		var json = Preferences.Get(key, "");
+		if (json.Length == 0)
+			return null;
+
+		try
+		{
+			return JsonSerializer.Deserialize<MentorDto>(json, ApiConfig.Json);
+		}
+		catch (JsonException)
+		{
+			Preferences.Remove(key);
+			return null;
+		}
+	}
+
+	private void Cache(MentorDto mentor)
+	{
+		if (CacheKey is { } key)
+			Preferences.Set(key, JsonSerializer.Serialize(mentor, ApiConfig.Json));
+	}
 }
 
 public sealed class ProfileService(ApiClient api)
@@ -56,6 +110,21 @@ public sealed class SessionService(ApiClient api)
 
 	public Task<SessionDto> ToggleActionAsync(int id, int actionId, CancellationToken ct = default) =>
 		api.PostAsync<SessionDto>($"api/sessions/{id}/actions/{actionId}/toggle", new { }, ct);
+}
+
+public sealed class MessageService(ApiClient api)
+{
+	public Task<List<ChatMessageDto>> ListAsync(int sessionId, CancellationToken ct = default) =>
+		api.GetAsync<List<ChatMessageDto>>($"api/sessions/{sessionId}/messages", ct);
+
+	public Task<ChatMessageDto> SendAsync(int sessionId, string content, CancellationToken ct = default) =>
+		api.PostAsync<ChatMessageDto>($"api/sessions/{sessionId}/messages", new { content }, ct);
+
+	public Task<MessageDeletedDto> DeleteAsync(int sessionId, int messageId, CancellationToken ct = default) =>
+		api.DeleteAsync<MessageDeletedDto>($"api/sessions/{sessionId}/messages/{messageId}", ct);
+
+	public Task<ChatClearedDto> ClearAsync(int sessionId, CancellationToken ct = default) =>
+		api.DeleteAsync<ChatClearedDto>($"api/sessions/{sessionId}/messages", ct);
 }
 
 public sealed class PrepService(ApiClient api)

@@ -22,7 +22,9 @@ public sealed class SessionOutcomesPage : AppPage
 
 	protected override View BuildContent()
 	{
-		var s = Begin("Sessions", "Your upcoming sessions and what came out of them");
+		var s = Begin(
+			IsMentorUser ? "Mentee sessions" : "Sessions",
+			IsMentorUser ? "Review requests and manage your sessions" : "Your upcoming sessions and what came out of them");
 		_body = new VerticalStackLayout { Spacing = 12 };
 		s.Add(_body);
 
@@ -84,8 +86,17 @@ public sealed class SessionOutcomesPage : AppPage
 		if (_sessions.Count == 0)
 		{
 			var card = new VerticalStackLayout { Spacing = 10 };
-			card.Add(T("You haven't booked a session yet.", 12, Ink));
-			card.Add(GradButton("Find a mentor", () => GoRoot(AppScreen.FindMentors), 40));
+			if (IsMentorUser)
+			{
+				card.Add(T("No mentee sessions yet.", 12, Ink));
+				card.Add(T("When a mentee requests a session, it will appear on your mentor dashboard for you to approve or decline.", 11, Muted));
+				card.Add(GradButton("Open mentor dashboard", () => GoRoot(AppScreen.MentorDashboard), 40));
+			}
+			else
+			{
+				card.Add(T("You haven't booked a session yet.", 12, Ink));
+				card.Add(GradButton("Find a mentor", () => GoRoot(AppScreen.FindMentors), 40));
+			}
 			body.Add(Card(card, 14));
 			return;
 		}
@@ -135,6 +146,7 @@ public sealed class SessionOutcomesPage : AppPage
 				pending.Add(OutlineButton("Cancel request", () => _ = CancelAsync(session), Line, 36), 1, 0);
 			}
 			stack.Add(pending);
+			stack.Add(OutlineButton("Message", () => _ = MessagesPage.OpenFor(session), Line, 36));
 			return Card(stack, 14);
 		}
 
@@ -153,6 +165,7 @@ public sealed class SessionOutcomesPage : AppPage
 		buttons.Add(OutlineButton("Log outcome", () => StartLogging(session), Line, 36), 1, 0);
 		buttons.Add(OutlineButton("Cancel", () => _ = CancelAsync(session), Line, 36), 2, 0);
 		stack.Add(buttons);
+		stack.Add(OutlineButton("Message", () => _ = MessagesPage.OpenFor(session), Line, 36));
 		return Card(stack, 14);
 	}
 
@@ -196,6 +209,7 @@ public sealed class SessionOutcomesPage : AppPage
 		stack.Add(T(session.MentorFeedback.Length > 0 ? session.MentorFeedback : "No feedback yet.", 11, Muted));
 
 		stack.Add(OutlineButton(session.IsMentorView ? "Edit feedback" : "Edit outcome", () => StartLogging(session), Line, 36));
+		stack.Add(OutlineButton("Message", () => _ = MessagesPage.OpenFor(session), Line, 36));
 		return Card(stack, 14);
 	}
 

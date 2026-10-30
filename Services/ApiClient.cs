@@ -22,9 +22,12 @@ public sealed class ApiClient
 
 	public Task<T> PutAsync<T>(string path, object body, CancellationToken ct = default) => SendAsync<T>(HttpMethod.Put, path, body, ct);
 
+	public Task<T> DeleteAsync<T>(string path, CancellationToken ct = default) => SendAsync<T>(HttpMethod.Delete, path, null, ct);
+
 	private async Task<T> SendAsync<T>(HttpMethod method, string path, object? body, CancellationToken ct)
 	{
 		using var request = new HttpRequestMessage(method, path);
+		request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 		if (Token is not null)
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 		if (body is not null)
@@ -69,6 +72,8 @@ public sealed class ApiClient
 		return (int)response.StatusCode switch
 		{
 			401 => "Your session has expired. Please log in again.",
+			405 => "The server does not support this request method. Check that the API route is enabled.",
+			406 => "The server cannot return the requested data format. Check that the API supports JSON responses.",
 			429 => "Too many attempts. Please wait a minute and try again.",
 			var code => $"Something went wrong (error {code})."
 		};
